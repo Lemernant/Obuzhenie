@@ -10,7 +10,8 @@ FROM dbo.Basket
 WHERE ID_Family = @id;
 BEGIN TRY
 UPDATE dbo.Family
-SET BudgetValue = BudgetValue - SUM(@price)
+SET dbo.Family.BudgetValue = dbo.Family.BudgetValue - SUM(@price)
+FROM dbo.Basket
 WHERE SurName = @FamilySurName;
 END TRY
 BEGIN CATCH
