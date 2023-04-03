@@ -1,20 +1,23 @@
-﻿CREATE OR ALTER PROC dbo.MakeFamilyPurchase
+﻿CREATE OR ALTER PROCEDURE dbo.MakeFamilyPurchase
 (@FamilySurName AS VARCHAR(255))
 AS
-DECLARE @price numeric;
-DECLARE @id int;
-SELECT @id = ID FROM dbo.Family
-WHERE SurName = @FamilySurName;
-SELECT @price = Value 
-FROM dbo.Basket
-WHERE ID_Family = @id;
-BEGIN TRY
-UPDATE dbo.Family
-SET dbo.Family.BudgetValue = dbo.Family.BudgetValue - SUM(@price)
-FROM dbo.Basket
-WHERE SurName = @FamilySurName;
-END TRY
-BEGIN CATCH
-PRINT 'Фамилия не найдена';
-END CATCH
-GO
+BEGIN
+IF NOT EXISTS (SELECT * FROM dbo.Family
+WHERE SurName = @FamilySurName)
+BEGIN
+RAISERROR('Фамилия не найдена', 16, 1)
+RETURN
+END
+ELSE
+BEGIN
+UPDATE A
+SET BudgetValue = BudgetValue - B.Budget
+FROM dbo.Family A JOIN 
+(SELECT D.ID_Family, SUM(D.Value) Budget
+FROM dbo.Family C JOIN 
+dbo.Basket D 
+ON C.ID = D.ID_Family
+GROUP BY D.ID_Family) B ON A.ID = B.ID_Family
+WHERE A.SurName = @FamilySurName
+END
+END
